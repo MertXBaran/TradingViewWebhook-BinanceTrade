@@ -3,8 +3,8 @@ const bodyParser = require('body-parser');
 const Binance = require('node-binance-api');
 
 const binance = new Binance().options({
-  APIKEY: 'zmywCXfuboPp4d3J3zUJS1BYWwEtsY4JHWS29ghDAfXMAQ6jaqc6EvSbukD4blfk', // Gerçek API anahtarınızla değiştirin
-  APISECRET: 'jWk9MlkTluS70RYr3jokAgOBmwYGb3q5DQF5HIfLQGQEVfb2IpL0bOj9UfJ19BrX' // Gerçek API gizli anahtarınızla değiştirin
+  APIKEY: '',
+  APISECRET: ''
 });
 
 const kaldirac = 2
@@ -15,7 +15,7 @@ app.set('trust proxy', true);
 
 app.use(bodyParser.json());
 
-const allowedIps = ['52.89.214.238', '34.212.75.30', '54.218.53.128', '52.32.178.7', '159.146.40.124'];
+const allowedIps = ['52.89.214.238', '34.212.75.30', '54.218.53.128', '52.32.178.7', '159.146.40.124']; // TradingView IP adresleri.
 app.use((req, res, next) => {
     const clientIp = req.ip;
     const normalizedClientIp = clientIp.startsWith('::ffff:') ? clientIp.substring(7) : clientIp;
@@ -23,7 +23,7 @@ app.use((req, res, next) => {
     if (allowedIps.includes(normalizedClientIp)) {
         next();
     } else {
-        console.log(normalizedClientIp); // Güncellenmiş IP adresini gösterir
+        console.log(normalizedClientIp);
         res.status(403).send('Access Denied');
     }
 });
@@ -34,17 +34,14 @@ app.post('/webhook', async (req, res) => {
     console.log('Received Webhook:', req.body);
     const { coin, status } = req.body;
 
-    // İlgili coin için mevcut pozisyonu al veya yoksa "initial" ata
     const currentPosition = currentPositions[coin] || "initial";
 
-    // Mevcut pozisyon varsa ve farklı bir işlem gerekiyorsa, mevcut pozisyonu kapat
     if (currentPosition !== "initial") {
         let closingTime = new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" });
         console.log(`Closing current position for ${coin} at ${closingTime}`);
         await closePosition(coin, currentPosition);
     }
 
-    // Yeni pozisyonu aç
     if (status === "sell" && currentPosition !== "sell") {
         let closingTime = new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" });
         console.log(`Processing sell order for ${coin} at ${closingTime}`);
@@ -57,7 +54,6 @@ app.post('/webhook', async (req, res) => {
         await placeOrder(coin, islemmiktariusdt, "buy");
     }
 
-    // Güncel pozisyonu kaydet
     currentPositions[coin] = status;
 
     res.status(200).send('OK');
